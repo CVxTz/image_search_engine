@@ -221,8 +221,8 @@ if __name__ == "__main__":
 
     mapping = json.load(open('mapping.json', 'r'))
 
-    train = json.load(open("input/filtred_train_data.json", 'r'))
-    val = json.load(open("input/filtred_val_data.json", 'r'))
+    train = json.load(open("../input/filtred_train_data.json", 'r'))
+    val = json.load(open("../input/filtred_val_data.json", 'r'))
 
     list_images_train, captions_train = list(zip(*train))
     captions_train = [tokenize(x) for x in captions_train]

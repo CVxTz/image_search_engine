@@ -38,8 +38,8 @@ def get_mapping_dict(vocab, cutoff=10):
     return mapping
 
 
-train = json.load(open("input/filtred_train_data.json", 'r'))
-val = json.load(open("input/filtred_val_data.json", 'r'))
+train = json.load(open("../input/filtred_train_data.json", 'r'))
+val = json.load(open("../input/filtred_val_data.json", 'r'))
 
 list_images_train, captions_train = list(zip(*train))
 

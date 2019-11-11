@@ -41,6 +41,6 @@ out_json = [x for x in out_json if os.path.exists(x[0]) and x[1].strip()]
 train, test = train_test_split(out_json, test_size=0.1)
 train, val = train_test_split(train, test_size=0.1)
 
-json.dump(train, open('input/filtred_train_data.json', 'w'), indent=4)
-json.dump(test, open('input/filtred_test_data.json', 'w'), indent=4)
-json.dump(val, open('input/filtred_val_data.json', 'w'), indent=4)
+json.dump(train, open('../input/filtred_train_data.json', 'w'), indent=4)
+json.dump(test, open('../input/filtred_test_data.json', 'w'), indent=4)
+json.dump(val, open('../input/filtred_val_data.json', 'w'), indent=4)
