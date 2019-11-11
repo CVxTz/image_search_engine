@@ -38,7 +38,7 @@ if __name__ == "__main__":
         e = i_model.predict(images)
         target_image_encoding += e.tolist()
 
-    target_text_encoding = t_model.predict(np.array(captions_test), verbose=1)
+    target_text_encoding = t_model.predict(np.array(captions_test), verbose=1, batch_size=128)
 
     target_text_encoding = target_text_encoding.tolist()
 
@@ -46,3 +46,6 @@ if __name__ == "__main__":
                        "text_repr": target_text_encoding})
 
     df.to_json(out_name, orient='records')
+
+    data = json.load(open(out_name, 'r'))
+    json.dump(data, open(out_name, 'w'), indent=4)
