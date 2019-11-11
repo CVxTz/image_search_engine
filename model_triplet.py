@@ -1,26 +1,23 @@
+import json
+import re
 from random import choice, sample
 
 import cv2
 import numpy as np
-
-import json
-from nltk.tokenize import word_tokenize
-import re
 import tensorflow.keras.backend as K
+from nltk.tokenize import word_tokenize
 from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.applications.imagenet_utils import preprocess_input
+from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.layers import Input, GlobalMaxPool2D, GlobalMaxPool1D, Dense, Embedding, GRU, \
     Bidirectional, Concatenate, Lambda
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 
 UNK_TOKEN = "unk"
-SEP = " sep "
 img_shape = (222, 171, 3)
 vec_dim = 50
 BATCH_SIZE = 32
-
 
 
 def tokenize(x):
@@ -121,10 +118,10 @@ def gen(list_images, list_captions, batch_size=16):
         X2 = np.array(captions_p)
         X3 = np.array(captions_n)
 
-        yield [X1, X2, X3], np.zeros((batch_size, 3*vec_dim))
+        yield [X1, X2, X3], np.zeros((batch_size, 3 * vec_dim))
 
 
-def pretrain_model(vocab_size, lr=0.0001):
+def model(vocab_size, lr=0.0001):
     input_1 = Input(shape=(None, None, 3))
     input_2 = Input(shape=(None,))
     input_3 = Input(shape=(None,))
@@ -140,7 +137,7 @@ def pretrain_model(vocab_size, lr=0.0001):
 
     embed = Embedding(vocab_size, 50, name="embed")
     gru = Bidirectional(GRU(256, return_sequences=True), name="gru_1")
-    dense_2 = Dense(vec_dim, activation ="linear", name="dense_text_1")
+    dense_2 = Dense(vec_dim, activation="linear", name="dense_text_1")
 
     x2 = embed(input_2)
     x2 = gru(x2)
@@ -169,32 +166,88 @@ def pretrain_model(vocab_size, lr=0.0001):
     return model
 
 
-mapping = json.load(open('mapping.json', 'r'))
+def image_model(lr=0.0001):
+    input_1 = Input(shape=(None, None, 3))
 
-train = json.load(open("amazon_filtred_train_data.json", 'r'))
-val = json.load(open("amazon_filtred_train_data.json", 'r'))
+    base_model = ResNet50(weights='imagenet', include_top=False)
 
-list_images_train, captions_train = list(zip(*train))
-captions_train = [tokenize(x) for x in captions_train]
-captions_train = map_sentences(captions_train, mapping)
-captions_train = cap_sequences(captions_train, 150, 0)
+    x1 = base_model(input_1)
+    x1 = GlobalMaxPool2D()(x1)
 
-list_images_val, captions_val = list(zip(*val))
-captions_val = [tokenize(x) for x in captions_val]
+    dense_1 = Dense(vec_dim, activation="linear", name="dense_image_1")
 
-captions_val = map_sentences(captions_val, mapping)
-captions_val = cap_sequences(captions_val, 150, 0)
+    x1 = dense_1(x1)
 
-file_path = "pretrain_model_triplet.h5"
+    _norm = Lambda(lambda x: K.l2_normalize(x, axis=-1))
 
-model = pretrain_model(vocab_size=len(mapping) + 1)
+    x1 = _norm(x1)
 
-# model.load_weights(file_path, by_name=True)
 
-checkpoint = ModelCheckpoint(file_path, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
-reduce = ReduceLROnPlateau(monitor="val_loss", mode='min', patience=10, min_lr=1e-7)
+    model = Model([input_1], x1)
 
-model.fit_generator(gen(list_images_train, captions_train, batch_size=BATCH_SIZE), use_multiprocessing=True,
-                    validation_data=gen(list_images_train, captions_val, batch_size=BATCH_SIZE), epochs=10000,
-                    verbose=1, workers=4, steps_per_epoch=200, validation_steps=100, callbacks=[checkpoint, reduce])
-model.save_weights(file_path)
+    model.compile(loss=triplet_loss, optimizer=Adam(lr))
+
+    model.summary()
+
+    return model
+
+
+def text_model(vocab_size, lr=0.0001):
+    input_2 = Input(shape=(None,))
+
+    embed = Embedding(vocab_size, 50, name="embed")
+    gru = Bidirectional(GRU(256, return_sequences=True), name="gru_1")
+    dense_2 = Dense(vec_dim, activation="linear", name="dense_text_1")
+
+    x2 = embed(input_2)
+    x2 = gru(x2)
+    x2 = GlobalMaxPool1D()(x2)
+    x2 = dense_2(x2)
+
+    _norm = Lambda(lambda x: K.l2_normalize(x, axis=-1))
+
+    x2 = _norm(x2)
+
+    model = Model([input_2], x2)
+
+    model.compile(loss=triplet_loss, optimizer=Adam(lr))
+
+    model.summary()
+
+    return model
+
+if __name__ == "__main__":
+
+
+    mapping = json.load(open('mapping.json', 'r'))
+
+    train = json.load(open("input/filtred_train_data.json", 'r'))
+    val = json.load(open("input/filtred_val_data.json", 'r'))
+
+    list_images_train, captions_train = list(zip(*train))
+    captions_train = [tokenize(x) for x in captions_train]
+    captions_train = map_sentences(captions_train, mapping)
+    captions_train = cap_sequences(captions_train, 70, 0)
+
+    list_images_val, captions_val = list(zip(*val))
+    captions_val = [tokenize(x) for x in captions_val]
+
+    captions_val = map_sentences(captions_val, mapping)
+    captions_val = cap_sequences(captions_val, 70, 0)
+
+    file_path = "model_triplet.h5"
+
+    model = model(vocab_size=len(mapping) + 1)
+
+    try:
+        model.load_weights(file_path, by_name=True)
+    except:
+        pass
+
+    checkpoint = ModelCheckpoint(file_path, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
+    reduce = ReduceLROnPlateau(monitor="val_loss", mode='min', patience=10, min_lr=1e-7)
+
+    model.fit_generator(gen(list_images_train, captions_train, batch_size=BATCH_SIZE), use_multiprocessing=True,
+                        validation_data=gen(list_images_val, captions_val, batch_size=BATCH_SIZE), epochs=10000,
+                        verbose=1, workers=4, steps_per_epoch=300, validation_steps=100, callbacks=[checkpoint, reduce])
+    model.save_weights(file_path)
