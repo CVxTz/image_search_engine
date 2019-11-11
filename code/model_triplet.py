@@ -182,10 +182,9 @@ def image_model(lr=0.0001):
 
     x1 = _norm(x1)
 
-
     model = Model([input_1], x1)
 
-    model.compile(loss=triplet_loss, optimizer=Adam(lr))
+    model.compile(loss="mae", optimizer=Adam(lr))
 
     model.summary()
 
@@ -210,14 +209,14 @@ def text_model(vocab_size, lr=0.0001):
 
     model = Model([input_2], x2)
 
-    model.compile(loss=triplet_loss, optimizer=Adam(lr))
+    model.compile(loss="mae", optimizer=Adam(lr))
 
     model.summary()
 
     return model
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
 
     mapping = json.load(open('mapping.json', 'r'))
 
