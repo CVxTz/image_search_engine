@@ -98,12 +98,14 @@ def cap_sequences(list_sequences, max_len, append):
     return capped
 
 
-def read_img(path):
+def read_img(path, preprocess=True):
     img = cv2.imread(path)
     if img is None or img.size<10:
         img = np.zeros((222, 171))
     img = cv2.resize(img, (171, 222))
-    return preprocess_input(img)
+    if preprocess:
+        img = preprocess_input(img)
+    return img
 
 
 def gen(list_images, list_captions, batch_size=16, aug=False):

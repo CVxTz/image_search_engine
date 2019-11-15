@@ -9,6 +9,8 @@ out_name = "../output/test_representations.json"
 
 data = pd.read_json(out_name)
 
+data = data.sample(n=10000)
+
 img_repr = data['image_repr'].tolist()
 img_repr_random = data['image_repr'].tolist()
 shuffle(img_repr_random)
