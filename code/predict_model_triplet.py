@@ -49,3 +49,26 @@ if __name__ == "__main__":
 
     data = json.load(open(out_name, 'r'))
     json.dump(data, open(out_name, 'w'), indent=4)
+
+    # New queries
+
+    out_name = "../output/queries_representations.json"
+
+    _captions_test = ['blue shirt', 'red dress', 'halloween outfit', 'baggy jeans', 'pokemon']
+
+    captions_test = [tokenize(x) for x in _captions_test]
+    captions_test = map_sentences(captions_test, mapping)
+    captions_test = cap_sequences(captions_test, 70, 0)
+
+    target_text_encoding = t_model.predict(np.array(captions_test), verbose=1, batch_size=128)
+
+    df = pd.DataFrame({"text": _captions_test,
+                       "text_repr": target_text_encoding})
+
+    df.to_json(out_name, orient='records')
+
+    data = json.load(open(out_name, 'r'))
+    json.dump(data, open(out_name, 'w'), indent=4)
+
+
+

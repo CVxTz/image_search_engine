@@ -10,7 +10,7 @@ from tensorflow.keras.applications import ResNet50
 from tensorflow.keras.applications.imagenet_utils import preprocess_input
 from tensorflow.keras.callbacks import ModelCheckpoint, ReduceLROnPlateau
 from tensorflow.keras.layers import Input, GlobalMaxPool2D, GlobalMaxPool1D, Dense, Embedding, GRU, \
-    Bidirectional, Concatenate, Lambda
+    Bidirectional, Concatenate, Lambda, SpatialDropout1D
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import Adam
 
@@ -100,11 +100,13 @@ def cap_sequences(list_sequences, max_len, append):
 
 def read_img(path):
     img = cv2.imread(path)
+    if img is None or img.size<10:
+        img = np.zeros((222, 171))
     img = cv2.resize(img, (171, 222))
     return preprocess_input(img)
 
 
-def gen(list_images, list_captions, batch_size=16):
+def gen(list_images, list_captions, batch_size=16, aug=False):
     indexes = list(range(len(list_images)))
     while True:
         batch_indexes = sample(indexes, batch_size)
@@ -115,6 +117,8 @@ def gen(list_images, list_captions, batch_size=16):
         captions_n = [choice(list_captions) for _ in batch_indexes]
 
         X1 = np.array([read_img(x) for x in candidate_images])
+        if aug and np.random.uniform(0, 1)<0.5:
+            X1 = X1[:, :, ::-1, :]
         X2 = np.array(captions_p)
         X3 = np.array(captions_n)
 
@@ -136,15 +140,18 @@ def model(vocab_size, lr=0.0001):
     x1 = dense_1(x1)
 
     embed = Embedding(vocab_size, 50, name="embed")
+
     gru = Bidirectional(GRU(256, return_sequences=True), name="gru_1")
     dense_2 = Dense(vec_dim, activation="linear", name="dense_text_1")
 
     x2 = embed(input_2)
+    x2 = SpatialDropout1D(0.1)(x2)
     x2 = gru(x2)
     x2 = GlobalMaxPool1D()(x2)
     x2 = dense_2(x2)
 
     x3 = embed(input_3)
+    x3 = SpatialDropout1D(0.1)(x3)
     x3 = gru(x3)
     x3 = GlobalMaxPool1D()(x3)
     x3 = dense_2(x3)
@@ -236,7 +243,7 @@ if __name__ == "__main__":
 
     file_path = "model_triplet.h5"
 
-    model = model(vocab_size=len(mapping) + 1)
+    model = model(vocab_size=len(mapping) + 1, lr=0.00001)
 
     try:
         model.load_weights(file_path, by_name=True)
@@ -246,7 +253,8 @@ if __name__ == "__main__":
     checkpoint = ModelCheckpoint(file_path, monitor='val_loss', verbose=1, save_best_only=True, mode='min')
     reduce = ReduceLROnPlateau(monitor="val_loss", mode='min', patience=10, min_lr=1e-7)
 
-    model.fit_generator(gen(list_images_train, captions_train, batch_size=BATCH_SIZE), use_multiprocessing=True,
+    model.fit_generator(gen(list_images_train, captions_train, batch_size=BATCH_SIZE, aug=True),
+                        use_multiprocessing=True,
                         validation_data=gen(list_images_val, captions_val, batch_size=BATCH_SIZE), epochs=10000,
                         verbose=1, workers=4, steps_per_epoch=300, validation_steps=100, callbacks=[checkpoint, reduce])
     model.save_weights(file_path)
