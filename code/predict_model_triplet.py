@@ -31,28 +31,28 @@ if __name__ == "__main__":
     t_model.load_weights(file_path, by_name=True)
     i_model.load_weights(file_path, by_name=True)
 
-    # target_image_encoding = []
-    #
-    # for img_paths in tqdm(chunker(list_images_test, 128), total=len(list_images_test)//128):
-    #     images = np.array([read_img(file_path) for file_path in img_paths])
-    #     e = i_model.predict(images)
-    #     target_image_encoding += e.tolist()
-    #
-    # target_text_encoding = t_model.predict(np.array(captions_test), verbose=1, batch_size=128)
-    #
-    # target_text_encoding = target_text_encoding.tolist()
-    #
-    # df = pd.DataFrame({"images": list_images_test, "text": _captions_test, "image_repr": target_image_encoding,
-    #                    "text_repr": target_text_encoding})
-    #
-    # df.to_json(out_name, orient='records')
-    #
-    # data = json.load(open(out_name, 'r'))
-    # json.dump(data, open(out_name, 'w'), indent=4)
-    #
-    # # New queries
-    #
-    # out_name = "../output/queries_representations.json"
+    target_image_encoding = []
+
+    for img_paths in tqdm(chunker(list_images_test, 128), total=len(list_images_test)//128):
+        images = np.array([read_img(file_path) for file_path in img_paths])
+        e = i_model.predict(images)
+        target_image_encoding += e.tolist()
+
+    target_text_encoding = t_model.predict(np.array(captions_test), verbose=1, batch_size=128)
+
+    target_text_encoding = target_text_encoding.tolist()
+
+    df = pd.DataFrame({"images": list_images_test, "text": _captions_test, "image_repr": target_image_encoding,
+                       "text_repr": target_text_encoding})
+
+    df.to_json(out_name, orient='records')
+
+    data = json.load(open(out_name, 'r'))
+    json.dump(data, open(out_name, 'w'), indent=4)
+
+    # New queries
+
+    out_name = "../output/queries_representations.json"
 
     _captions_test = ['blue tshirt', 'blue shirt', 'red dress', 'halloween outfit', 'baggy jeans', 'ring',
                       'Black trousers', 'heart Pendant']
