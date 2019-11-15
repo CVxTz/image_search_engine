@@ -1,14 +1,15 @@
-import json
-from random import shuffle
 import pandas as pd
-import numpy as np
-from matplotlib import pyplot
 from sklearn.neighbors import NearestNeighbors
 import matplotlib.pyplot as plt
 from model_triplet import read_img
-import cv2
+from uuid import uuid4
 from uuid import uuid4
 
+import matplotlib.pyplot as plt
+import pandas as pd
+from sklearn.neighbors import NearestNeighbors
+
+from model_triplet import read_img
 
 repr_json = "../output/test_representations.json"
 
@@ -18,7 +19,7 @@ queries_repr_json = "../output/queries_representations.json"
 
 queries_data = pd.read_json(queries_repr_json)
 
-data = data.sample(n=50000)
+#data = data.sample(n=50000)
 
 img_repr = data['image_repr'].tolist()
 img_paths = data['images'].tolist()
@@ -49,11 +50,11 @@ for q, all_images in zip(queries_data['text'], most_similar_images):
         axes[i, j].imshow(image/255)
         axes[i, j].axis('off')
         axes[i, j].axis('off')
-        axes[i, j].set_title('Result Image %s'%i)
+        axes[i, j].set_title('Result Image %s'%(idx+1))
 
 
     plt.subplots_adjust(wspace=0.2, hspace=0.2)
-    fig.title('Query : %s'%q)
+    fig.suptitle('Query : %s'%q)
 
     plt.savefig('../output/queries/%s.png'%uuid4().hex)
 

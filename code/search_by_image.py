@@ -14,7 +14,7 @@ repr_json = "../output/test_representations.json"
 
 data = pd.read_json(repr_json)
 
-data = data.sample(n=50000)
+#data = data.sample(n=50000)
 
 img_repr = data['image_repr'].tolist()
 img_paths = data['images'].tolist()
@@ -50,7 +50,7 @@ for q, similar in zip(query_image, most_similar_images):
         if idx == 0:
             axes[i, j].set_title('Query Image')
         else:
-            axes[i, j].set_title('Result Image %s'%i)
+            axes[i, j].set_title('Result Image %s'%idx)
 
     plt.subplots_adjust(wspace=0.2, hspace=0.2)
     plt.savefig('../output/images/%s.png'%uuid4().hex)

@@ -18,10 +18,6 @@ if __name__ == "__main__":
 
     test = json.load(open("../input/filtred_test_data.json", 'r'))
 
-    list_images_test, _captions_test = list(zip(*test))
-    captions_test = [tokenize(x) for x in _captions_test]
-    captions_test = map_sentences(captions_test, mapping)
-    captions_test = cap_sequences(captions_test, 70, 0)
 
     file_path = "model_triplet.h5"
 
@@ -30,6 +26,11 @@ if __name__ == "__main__":
 
     t_model.load_weights(file_path, by_name=True)
     i_model.load_weights(file_path, by_name=True)
+
+    list_images_test, _captions_test = list(zip(*test))
+    captions_test = [tokenize(x) for x in _captions_test]
+    captions_test = map_sentences(captions_test, mapping)
+    captions_test = cap_sequences(captions_test, 70, 0)
 
     target_image_encoding = []
 
@@ -54,14 +55,15 @@ if __name__ == "__main__":
 
     out_name = "../output/queries_representations.json"
 
-    _captions_test = ['blue tshirt', 'blue shirt', 'red dress', 'halloween outfit', 'baggy jeans', 'ring',
-                      'Black trousers', 'heart Pendant']
+    _captions_test = ['blue tshirt', 'blue shirt', 'red dress', 'halloween outfit', 'baggy pants', 'gold ring',
+                      'Black trousers', 'animal pendant', 'black white tshirt', 'women red hoodie', 'animal outfit',
+                      'men flipflops']
 
     captions_test = [tokenize(x) for x in _captions_test]
     captions_test = map_sentences(captions_test, mapping)
     captions_test = cap_sequences(captions_test, 70, 0)
 
-    target_text_encoding = t_model.predict(np.array(captions_test), verbose=1, batch_size=128)
+    target_text_encoding = t_model.predict(np.array(captions_test), verbose=2, batch_size=128)
 
     target_text_encoding = target_text_encoding.tolist()
 
