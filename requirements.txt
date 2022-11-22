@@ -5,6 +5,6 @@ tensorflow_gpu==2.0.1
 nltk==3.4.5
 tqdm==4.36.1
 opencv_python==4.1.1.26
-Pillow==6.2.1
+Pillow==9.3.0
 scikit_learn==0.21.3
 tensorflow==2.0.1
